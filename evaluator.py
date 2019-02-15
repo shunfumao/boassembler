@@ -102,7 +102,7 @@ def extract_stat_shannon(eval_res_dir):
 
   return stat
 
-def calc_metric(stat_dic, metric_type):
+def calc_metric(stat_dic, metric_type, lam=0.5):
   """Calibrated metric.
 
   Args:
@@ -112,6 +112,7 @@ def calc_metric(stat_dic, metric_type):
       possible types:
         'tr-sum' 
         'tr-f1'
+    lam: a weight to adjust F1 score
   Returns:
     a fload of metric
   """
@@ -121,6 +122,8 @@ def calc_metric(stat_dic, metric_type):
     return float(sens+prec)
   elif metric_type == 'tr-f1':
     sens, prec = stat_dic['Transcript']
+    sens = (1-lam)*sens
+    prec = lam*prec
     return float(2*sens*prec/float(sens+prec))
   else:
     util.logging('unknown metric_type; None to be returned.')

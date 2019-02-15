@@ -17,6 +17,11 @@ def call_and_eval_assembler(assembler_name,
   def _call_and_eval_assembler(**kwargs):
 
     params = util.kwargs_to_params_dic(kwargs, param2str)
+    if params is not None:
+      lam = params.get('-lam', 0.5)
+      params.pop('-lam', None)
+    else:
+      lam = 0.5
 
     if assembler_name != 'shannon':
       assembler.run_assembler(assembler_name,
@@ -31,7 +36,7 @@ def call_and_eval_assembler(assembler_name,
       metric_stat = evaluator.extract_stat(paths['eval_res_prefix'])    
 
       #TODO(shunfu): find a good metric for BO
-      metric = evaluator.calc_metric(metric_stat, metric_type)
+      metric = evaluator.calc_metric(metric_stat, metric_type, lam)
 
     else:
       #pdb.set_trace()
@@ -54,7 +59,7 @@ def call_and_eval_assembler(assembler_name,
     util.logging('assembler:'+assembler_name, paths['log'])
     util.logging('params: default' if params is None else 'params:\n'+str(params), paths['log'])
     util.logging('metric stat is: %s'%str(metric_stat), paths['log'])
-    util.logging('metric (%s) is %f\n'%(metric_type, metric), paths['log'])
+    util.logging('metric (%s, lam=%.2f) is %f\n'%(metric_type, lam, metric), paths['log'])
 
     return metric
 
