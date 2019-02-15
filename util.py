@@ -1,4 +1,4 @@
-import subprocess, pdb
+import subprocess, pdb, sys, time
 
 def parent_dir(dir_path):
   if dir_path[0]=='/':
@@ -108,3 +108,44 @@ def logging(msg, log=None):
       fo.write(msg+'\n')
 
   return
+
+
+'''
+used to show progress on screen
+''' 
+class iterCounter:
+
+    def __init__(self, N, msg):
+
+        self.N = N
+        self.msg = msg
+        self.T = N/100
+        self.p = 0
+        self.q = 0
+
+        return
+
+    def finish(self):
+
+        print('')#print an empty line for display purpose
+
+        return
+
+    def inc(self):
+
+        if self.N<100:
+            self.p += 1
+            sys.stdout.write('\r');
+            sys.stdout.write('[%s] %s: %.2f %%'%(str(time.asctime()), self.msg, float(self.p)*100.0/self.N));
+            sys.stdout.flush()
+
+        else:
+            self.p += 1
+            if self.p >= self.T:
+                self.p = 0
+                self.q += 1
+                sys.stdout.write('\r');
+                sys.stdout.write('[%s] %s: %d %%'%(str(time.asctime()), self.msg, self.q));
+                sys.stdout.flush()
+
+        return       
