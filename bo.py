@@ -76,7 +76,7 @@ def check_bo_tune(assembler_name, metric_type, paths):
                             param_range)
 
   gp_params = {'kernel': None, 'alpha': 1e-3}
-  bo.maximize(init_points=5, n_iter=20, kappa=5, **gp_params)
+  bo.maximize(init_points=5, n_iter=50, kappa=5, **gp_params)
 
   msg = 'BO-tuned metric (%s) for %s:\n'%(metric_type, assembler_name)
   msg += 'bo.res[max]:\n'
