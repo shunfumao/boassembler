@@ -97,7 +97,7 @@ def args_to_params_dic(argsa, param_str_list):
 def logging(msg, log=None):
   """logging msg to screen (e.g. verbose) or to file (e.g. dump_path)."""
 
-  if True: # True:  # verbose
+  if False: # True:  # verbose
     if len(msg)>2000:
       print '%s...%s'%(msg[:100], msg[-100:])
     else:

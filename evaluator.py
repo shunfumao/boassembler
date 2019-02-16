@@ -124,7 +124,11 @@ def calc_metric(stat_dic, metric_type, lam=0.5):
     sens, prec = stat_dic['Transcript']
     sens = (1-lam)*sens
     prec = lam*prec
-    return float(2*sens*prec/float(sens+prec))
+    sum_val = sens + prec
+    if sum_val == 0:
+      return 0
+    else:
+      return float(2*sens*prec/float(sens+prec))
   else:
     util.logging('unknown metric_type; None to be returned.')
     return None
