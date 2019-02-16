@@ -1,0 +1,102 @@
+# coding: utf-8
+# param type default range
+
+#-m int 200 (1,500) #This is the expected (mean) fragment length. The default is 200bp.Note: Cufflinks now learns the fragment length mean for each SAM file, so using this option is no longer recommended with paired-end reads.
+
+#-s int 80 (1,100) #The standard deviation for the distribution on fragment lengths. The default is 80bp.Note: Cufflinks now learns the fragment length standard deviation for each SAM file, so using this option is no longer recommended with paired-end reads.
+
+#-N/–upper-quartile-norm With this option, Cufflinks normalizes by the upper quartile of the number of fragments mapping to individual loci instead of the total number of sequenced fragments. This can improve robustness of differential expression calls for less abundant genes and transcripts.
+
+#–total-hits-norm With this option, Cufflinks counts all fragments, including those not compatible with any reference transcript, towards the number of mapped hits used in the FPKM denominator. This option can be combined with -N/–upper-quartile-norm. It is active by default.
+
+#–compatible-hits-norm With this option, Cufflinks counts only those fragments compatible with some reference transcript towards the number of mapped hits used in the FPKM denominator. This option can be combined with -N/–upper-quartile-norm. It is inactive by default, and can only be used in combination with
+
+#–GTF Use with either RABT or ab initio assembly is not supported
+
+#–max-mle-iterations int 5000 (1000,10000) #Sets the number of iterations allowed during maximum likelihood estimation of abundances. Default: 5000
+
+#–max-bundle-frags <int> Sets the maximum number of fragments a locus may have before being skipped. Skipped loci are listed in skipped.gtf. Default: 1000000
+
+#–no-effective-length-correction Cufflinks will not employ its “effective” length normalization to transcript FPKM.
+
+#–no-length-correction Cufflinks will not normalize fragment counts by transcript length at all. Use this option when fragment count is independent of the size of the features being quantified (e.g. for small RNA libraries, where no fragmentation takes place, or 3 prime end sequencing, where sampled RNA fragments are all essentially the same length). Experimental option, use with caution.
+
+###Advanced Assembly Options
+
+#-L/–label
+#Cufflinks will report transfrags in GTF format, with a prefix given by this option. The default prefix is “CUFF”.
+
+#-F/–min-isoform-fraction <0.0-1.0>
+#After calculating isoform abundance for a gene, Cufflinks filters out transcripts that it believes are very low abundance, because isoforms expressed at extremely low levels often cannot reliably be assembled, and may even be artifacts of incompletely spliced precursors of processed transcripts. This parameter is also used to filter out introns that have far fewer spliced alignments supporting them. The default is 0.1, or 10% of the most abundant isoform (the major isoform) of the gene.
+
+-F float 0.1 (0.0,1.0)
+
+#-j/–pre-mrna-fraction <0.0-1.0>
+# Some RNA-Seq protocols produce a significant amount of reads that originate from incompletely spliced transcripts, and these reads can confound the assembly of fully spliced mRNAs. Cufflinks uses this parameter to filter out alignments that lie within the intronic intervals implied by the spliced alignments. The minimum depth of coverage in the intronic region covered by the alignment is divided by the number of spliced reads, and if the result is lower than this parameter value, the intronic alignments are ignored. The default is 15%.
+
+-j float 0.15 (0.0,1.0)
+
+#-I/–max-intron-length <int>
+#The maximum intron length. Cufflinks will not report transcripts with introns longer than this, and will ignore SAM alignments with REF_SKIP CIGAR operations longer than this. The default is 300,000.
+
+-I int 300000 (200000,500000)
+
+#-a/–junc-alpha <0.0-1.0>
+#The alpha value for the binomial test used during false positive spliced alignment filtration. Default: 0.001
+
+-a float 0.001 (0.0,1.0)
+
+#-A/–small-anchor-fraction <0.0-1.0>
+# Spliced reads with less than this percent of their length on each side of the junction are considered suspicious and are candidates for filtering prior to assembly. Default: 0.09.
+
+-A float 0.09 (0.0,1.0)
+
+#–min-frags-per-transfrag <int>
+#Assembled transfrags supported by fewer than this many aligned RNA-Seq fragments are not reported. Default: 10.
+
+-min-frags-per-transfrag int 10 (5,20)
+
+#–overhang-tolerance <int>
+#The number of bp allowed to enter the intron of a transcript when determining if a read or another transcript is mappable to/compatible with it. The default is 8 bp based on the default bowtie/TopHat parameters.
+
+#–max-bundle-length <int>
+#Maximum genomic length allowed for a given bundle. The default is 3,500,000 bp.
+
+#–min-intron-length <int>
+#Minimum intron size allowed in genome. The default is 50 bp.
+
+#–trim-3-avgcov-thresh <int>
+#Minimum average coverage required to attempt 3’ trimming. The default is 10.
+
+#–trim-3-dropoff-frac <int>
+#The fraction of average coverage below which to trim the 3’ end of an assembled transcript. The default is 0.1.
+
+#–max-multiread-fraction <0.0-1.0>
+#The fraction a transfrag’s supporting reads that may be multiply mapped to the genome. A transcript composed of more than this fraction will not be reported by the assembler. Default: 0.75 (75% multireads or more is suppressed).
+
+#–overlap-radius <int>
+#Transfrags that are separated by less than this distance get merged together, and the gap is filled. Default: 50 (in bp).
+
+###Advanced Reference Annotation Based Transcript (RABT) Assembly Options
+
+#Note: These options have an affect only when used in conjuction with -g/–GTF-guide.
+
+#–3-overhang-tolerance <int>
+#The number of bp allowed to overhang the 3’ end of a reference transcript when determining if an assembled transcript should be merged with it (ie, the assembled transcript is not novel). The default is 600 bp.
+
+#–intron-overhang-tolerance <int>
+#The number of bp allowed to enter the intron of a reference transcript when determining if an assembled transcript should be merged with it (ie, the assembled transcript is not novel). The default is 50 bp.
+
+#–no-faux-reads
+#This option disables tiling of the reference transcripts with faux reads. Use this if you only want to use sequencing reads in assembly but do not want to output assembled transcripts that lay within reference transcripts. All reference transcripts in the input annotation will also be included in the output.
+
+###Advanced Program Behavior Options
+
+#-v/–verbose
+#Print lots of status updates and other diagnostic information.
+
+#-q/–quiet
+#Suppress messages other than serious warnings and errors.
+
+#–no-update-check
+#Turns off the automatic routine that contacts the Cufflinks server to check for a more recent version.
