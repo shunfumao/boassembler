@@ -1,0 +1,17 @@
+# param type default range
+
+-f float 0.1 (0.0,1.0) # minimum isoform abundance of the predicted transcripts as a fraction of the most abundant transcript assembled at a given locus
+
+-m int 200 (30,500) # sets the minimum length allowed for the predicted transcripts. Default: 200
+
+-a int 10 (0,20) # junctions that don't have spliced reads that align across them with at least this amount of bases on both sides are filtered out. Default: 10
+
+-j float 1 (0,10) # there should be at least this many spliced reads that align across a junction (i.e. junction coverage). This number can be fractional, since some reads align in more than one place. A read that aligns in n places will contribute 1/n to the junction coverage. Default: 1
+
+-c float 2.5 (0,10) # Sets the minimum read coverage allowed for the predicted transcripts. A transcript with a lower coverage than this value is not shown in the output. Default: 2.5
+
+-g int 50 (0,100) # Minimum locus gap separation value. Reads that are mapped closer than this distance are merged together in the same processing bundle. Default: 50 (bp)
+
+-M float 0.95 (0.0,1.0)	# Sets the maximum fraction of muliple-location-mapped reads that are allowed to be present at a given locus. Default: 0.95
+
+-lam float 0.3 (0.001,0.4999) # tune metric

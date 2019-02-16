@@ -5,17 +5,9 @@ def get_default_cmds(assembler_name, read_alignment, res_gtf):
 
   if assembler_name == 'stringtie':
     cmd = 'stringtie %s -o %s -p 25 '%(read_alignment, res_gtf)
-  elif assembler_name == 'scallop':
-    cmd = 'scallop -i %s -o %s --verbose 0'%(read_alignment, res_gtf)
   elif assembler_name == 'cufflinks':
     res_dir, _ = util.parent_dir(res_gtf)
-    cmd = 'cufflinks -o %s %s'%(res_dir, read_alignment)
-    pdb.set_trace()
-  elif assembler_name == 'shannon':
-    #TODO(shunfu): change the naming of read_alignment and res_gtf for de novo usage
-    reads = read_alignment
-    res_dir = res_gtf
-    cmd = 'Shannon_RNASeq_Cpp shannon -l 101 -s %s -o %s -t 16 -m 100G -u 4 '%(reads, res_dir)
+    cmd = 'cufflinks -o %s %s '%(res_dir, read_alignment)
   else:
     util.logging('unknown assembler: %s'%assembler_name)
     cmd = None
