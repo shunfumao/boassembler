@@ -8,6 +8,7 @@ import assembler
 import config
 import evaluator
 import util
+from argparse import ArgumentParser
 
 def call_and_eval_assembler(assembler_name, 
                             metric_type,
@@ -23,38 +24,23 @@ def call_and_eval_assembler(assembler_name,
     else:
       lam = 0.5
 
-    if assembler_name != 'shannon':
-      assembler.run_assembler(assembler_name,
+    assembler.run_assembler(assembler_name,
                             paths['read_alignment'],
                             paths['assembly_gtf'],
                             params)
 
-      evaluator.evaluate(paths['ref_gtf'],
+    evaluator.evaluate(paths['ref_gtf'],
                          paths['assembly_gtf'],
                          paths['eval_res_prefix'])
 
-      metric_stat = evaluator.extract_stat(paths['eval_res_prefix'])    
+    metric_stat = evaluator.extract_stat(paths['eval_res_prefix'])    
 
-      #TODO(shunfu): find a good metric for BO
+    #TODO(shunfu): find a good metric for BO
+    if metric_stat == {}:
+      metric = 0
+    else:
       metric = evaluator.calc_metric(metric_stat, metric_type, lam)
 
-    else:
-      #pdb.set_trace()
-      util.run_cmd('rm -r %s/*'%paths['res_dir'])  # clear for every iterations
-
-      assembler.run_assembler(assembler_name,
-                              paths['read_alignment'],
-                              paths['res_dir'],
-                              params)
-
-      evaluator.evaluate_shannon(paths['ref_gtf'],
-                         paths['assembly_gtf'],
-                         paths['eval_res_prefix'])
-
-      metric_stat = evaluator.extract_stat_shannon(paths['eval_res_prefix'])    
-
-      #TODO(shunfu): find a good metric for BO
-      metric = evaluator.calc_metric_shannon(metric_stat, metric_type)
     # res logs
     util.logging('assembler:'+assembler_name, paths['log'])
     util.logging('params: default' if params is None else 'params:\n'+str(params), paths['log'])
@@ -67,17 +53,22 @@ def call_and_eval_assembler(assembler_name,
   
 def check_baseline(assembler_name, metric_type, paths):
 
+  print '----- CHECK ASSEMBLY BASELINE -----'
+
   param_default, param_range, param2str = config.parse_params_bo(paths['param_config_path'])
 
   fn = call_and_eval_assembler(assembler_name, metric_type, paths)
   metric = fn()
 
-  util.logging('Baseline metric (%s) for %s: %f\n\n'%(metric_type, assembler_name, metric),
-               paths['log'])
-
+  msg = 'Baseline metric (%s) for %s: %f\n\n'%(metric_type, assembler_name, metric)
+  util.logging(msg, paths['log'])
+  
+  print msg
   return
 
 def check_bo_tune(assembler_name, metric_type, paths):
+
+  print '----- CHECK BO TUNE -----'
   
   param_default, param_range, param2str = config.parse_params_bo(paths['param_config_path'])
 
@@ -85,76 +76,109 @@ def check_bo_tune(assembler_name, metric_type, paths):
                             param_range)
 
   gp_params = {'kernel': None, 'alpha': 1e-3}
-  bo.maximize(init_points=5, n_iter=50, kappa=5, **gp_params)
-  # bo.maximize(n_iter=20, acq='ei', **gp_params)
+  bo.maximize(init_points=5, n_iter=20, kappa=5, **gp_params)
 
-  util.logging('BO-tuned metric (%s) for %s:'%(metric_type, assembler_name),
-               paths['log'])
+  msg = 'BO-tuned metric (%s) for %s:\n'%(metric_type, assembler_name)
+  msg += 'bo.res[max]:\n'
+  msg += str(bo.res['max'])
 
-  util.logging('bo.res[max]:', paths['log'])
-  util.logging(str(bo.res['max']), paths['log'])
+  util.logging(msg, paths['log'])
+
+  msg += '\nbo tune done\n'
+  msg += '%s written\n'%paths['log']
+  print msg
+
   return
 
-if __name__ == '__main__':
+def show_paths(paths):
+
+  print '----- SHOW PATHS -----'
+
+  for k, v in paths.items():
+    print k, ':  ', v
+  print ''
+  return
+
+def main():
   """
   Usage:
-  [1] run [assembler_name], compare baseline and bo-tuned res in terms of [metric_type,
-      store outputs (e.g. assembly res, metric stat) under .../[case_id] folder
-      and .../[case_id]_[assembler_name].log
-
-    python bo.py --assembler_name [assembler_name]
-                 --metric_type [metric_type]
-                 --case_id [case_id]  # e.g. 20181002-1                 
   """
 
-  args = sys.argv
+  parser = ArgumentParser()
 
-  #TODO(shunfu): add more assemblers
-  # assembler_name = 'stringtie'
-  assembler_name = args[args.index('--assembler_name')+1]
+  parser.add_argument(
+    '--assembler_name',
+    default='stringtie',
+    help='assembler whose hyper-parameter to be tuned. stringtie(default) and cufflinks supported')
 
-  # metric_type = 'tr-f1'
-  metric_type = args[args.index('--metric_type')+1]
+  parser.add_argument(
+    '--param_config',
+    default='config/params_stringtie.txt',
+    help='hyper-parameter config file. only numeric (int or float) parameters supported. default is config/params_stringtie.txt')
 
-  case_id = args[args.index('--case_id')+1]
-  #pdb.set_trace()
-  res_dir = '/home/shunfu/boassembler/res/%s'%case_id
+  parser.add_argument(
+    '--ref_gtf',
+    default='ref/hg19_chr15-UCSC.gtf',
+    help='transcriptome annotation to eval assembly performance')
+
+  parser.add_argument(
+    '--read_alignment',
+    default='data/ex1.bam',
+    help='dataset for assembly')
+
+  parser.add_argument(
+    '--metric_type',
+    default='tr-f1',
+    help='the metric score as feedback to BO. default is tr-f1 (F1 score for transcript sensitivity and precision)'
+    )
+
+  parser.add_argument(
+    '--res_dir',
+    help='the folder to store results.'
+    )
+
+  args = parser.parse_args()
+
+  res_dir = args.res_dir
+  res_temp = '%s/temp/'%(res_dir)
+  assembler_name = args.assembler_name
+  assembler_config = args.param_config
+  read_alignment = args.read_alignment
+  assembly_gtf = '%s/assembly.gtf'%(res_temp)
+  ref_gtf = args.ref_gtf
+  eval_res_prefix = '%s/eval'%(res_temp)
+  metric_type = args.metric_type
+  bo_log = '%s/bo.log'%(res_dir)
+
+  #----- AUTO ----- 
   util.run_cmd('mkdir -p %s'%res_dir)
+  util.run_cmd('mkdir -p %s'%res_temp)
 
-  #TODO(shunfu): paths via namespace
   paths = {}
 
   paths['res_dir'] = res_dir
 
-  paths['param_config_path'] = '/home/shunfu/boassembler/config/params_%s.txt'%(assembler_name)
+  paths['param_config_path'] = assembler_config 
 
-  if assembler_name=='shannon':
+  paths['ref_gtf'] = ref_gtf
 
-    paths['ref_gtf'] = '/data1/bowen/Shannon_C_seq/reference_data/medium_SE_reference.fasta'
+  paths['read_alignment']= read_alignment
 
-    paths['read_alignment']='/data1/bowen/Shannon_C_seq/test_data/medium.fasta'
+  paths['assembly_gtf'] = assembly_gtf
 
-    paths['assembly_gtf']='%s/reconstructed_seq.fasta'%(res_dir)
-    paths['eval_res_prefix'] = '%s/%s_res/'%(res_dir, assembler_name)
+  paths['eval_res_prefix'] = eval_res_prefix
 
-  else:
-  
-    paths['ref_gtf'] = '/home/shunfu/boassembler/data/resRef/hg19_chr15-UCSC.gtf'
+  paths['log'] = bo_log
 
-    paths['read_alignment']='/home/shunfu/boassembler/data/alignment/hits.sorted.bam'
-
-    paths['assembly_gtf']='%s/%s.gtf'%(res_dir, assembler_name)
-    paths['eval_res_prefix'] = '%s/%s_res'%(res_dir, assembler_name)
-
-  #TODO(shunfu): clear existing log
-  paths['log']='/home/shunfu/boassembler/res/%s_%s.log'%(case_id, assembler_name) 
+  show_paths(paths)
 
   # baseline:
-  #pdb.set_trace()
-  #check_baseline(assembler_name, metric_type, paths)
+  check_baseline(assembler_name, metric_type, paths)
 
   # bo tune
-  for k, v in paths.items():
-    print k, v
-  pdb.set_trace()
   check_bo_tune(assembler_name, metric_type, paths)
+
+  return
+
+if __name__ == '__main__':
+  main()
